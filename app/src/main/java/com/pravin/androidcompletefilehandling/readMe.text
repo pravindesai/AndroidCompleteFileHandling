@@ -1,0 +1,41 @@
+# INTERNAL STORAGE --> No permissions required
+//Third Party libaries for file operations
+    * Apache Commons
+    * Guava by google
+
+//Write to file
+
+openFileOutput(filename:String, mode:Int)
+    opens file if exists or create new
+    Modes:
+        MODE_PRIVATE ->(default)
+        MODE_APPEND  -> appends to data to previous data
+
+write(dataBytes:byte[])
+    write data in form of bytes in file
+
+close()
+    closes open file
+
+Example:
+    val data:String = "This data will get stored"
+    val fos:FileOutputStream = openFileOutput("fileName", MODE_PRIVATE)
+    fos.write(data.getBytes())
+    fos.close()
+
+//Read file
+
+    val fis:FileInputString = openFileInput("fileName")
+    var read:Int
+    var stringBuilder:StringBuilder = StringBuilder("")
+    while((read=fis.read()) != -1){
+        stringBuilder.append((Char)read)
+    }
+    print(stringBuilder)
+
+
+# External STORAGE --> Permissions required
+getExternalFilesDir() -> files deleted when app is uninstalled
+getExternalStoragePublicDirectory() -> Files does not get Deleted when app is uninstalled
+
+

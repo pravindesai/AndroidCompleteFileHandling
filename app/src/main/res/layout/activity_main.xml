@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:columnCount="2"
+    android:alignmentMode="alignBounds"
+    tools:context=".MainActivity">
+
+
+    <GridLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:columnCount="2"
+        android:alignmentMode="alignBounds">
+
+        <Button
+            android:id="@+id/internalStorageButton"
+            android:layout_columnWeight="1"
+            android:layout_width="0dp"
+            android:layout_margin="5dp"
+            android:padding="20dp"
+            android:text="Internal Storage operations"
+            />
+
+        <Button
+            android:id="@+id/externalStorageButton"
+            android:layout_columnWeight="1"
+            android:layout_width="0dp"
+            android:layout_margin="5dp"
+            android:padding="20dp"
+            android:text="External Storage operations"
+            />
+
+
+
+    </GridLayout>
+
+</ScrollView>
