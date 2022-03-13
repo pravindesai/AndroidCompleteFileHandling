@@ -15,6 +15,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.ViewModelProvider
+import com.pravin.androidcompletefilehandling.FileHandler
 import com.pravin.androidcompletefilehandling.databinding.ActivityExternalStorageBinding
 import com.pravin.androidcompletefilehandling.internalStorage.InternalStorageActViewModel
 import java.io.*
@@ -69,11 +70,11 @@ class ExternalStorageActivity : AppCompatActivity(), View.OnClickListener {
                           val filePath =  Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
                           val file = File(filePath, getFileName())
                           if (file.exists()){
-                              val data = readFromFile(file)
+                              val data = FileHandler.readFromFile(file)
                               setData(data)
 
                       }else{
-
+                        storagePermissionCheck()
                       }
                   }else{
                       storagePermissionCheck()
@@ -82,11 +83,10 @@ class ExternalStorageActivity : AppCompatActivity(), View.OnClickListener {
                 binding.writeEPubFileButton  ->{
                     val res = storagePermissionCheck()
                    if(res){
-
                              val filePath =  Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
                              if (!filePath.exists()) filePath.mkdirs()
                              val file = File(filePath, getFileName())
-                             writeToFile(file, getData())
+                             FileHandler.writeToFile(file, getData())
                              Log.e(TAG, "onClick: $filePath" )
                    }else{
                        storagePermissionCheck()
@@ -94,47 +94,16 @@ class ExternalStorageActivity : AppCompatActivity(), View.OnClickListener {
                 }
                 binding.readEPriFileButton   ->{
                     val file:File = File(PATH_ROOT_EXTERNAL, getFileName())
-                    val data = readFromFile(file)
+                    val data = FileHandler.readFromFile(file)
                     setData( data )
                 }
                 binding.writeEPriFileButton  ->{
                     val file:File = File(PATH_ROOT_EXTERNAL, getFileName())
-                    writeToFile(file, getData())
+                    FileHandler.writeToFile(file, getData())
                 }
             }
     }
 
-    private fun readFromFile(file: File): String {
-        var aBuffer: String? = ""
-        try {
-            val fis = FileInputStream(file)
-            val myReader = BufferedReader(InputStreamReader(fis))
-            var aDataRow: String? = ""
-            while (myReader.readLine().also { aDataRow = it } != null) {
-                aBuffer += aDataRow
-            }
-            myReader.close()
-            fis.close()
-            Log.e(TAG, "readFromFile: "+file.absolutePath )
-        } catch (e: FileNotFoundException) {
-            e.printStackTrace()
-        }
-        return aBuffer.toString()
-
-    }
-
-    private fun writeToFile(file: File, data: String) {
-        try {
-            val fos  = FileOutputStream(file)
-            fos.write(data.toByteArray())
-            fos.flush()
-            fos.close()
-            Toast.makeText(this, "Success", Toast.LENGTH_SHORT).show()
-        }catch (e:Exception){
-            Toast.makeText(this, "FAILED", Toast.LENGTH_SHORT).show()
-            Log.e(TAG, "writeToFile: $e" )
-        }
-    }
 
     private fun storagePermissionCheck():Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -180,9 +149,5 @@ class ExternalStorageActivity : AppCompatActivity(), View.OnClickListener {
     fun getData() = binding.dataEt.text.toString()
     fun setData(data:String) = binding.dataEt.setText(data)
 
-    fun isExternalStorageRedable():Boolean = Environment.getExternalStorageState().equals( Environment.MEDIA_MOUNTED )
-    fun isExternalStorgaeWritable():Boolean = Environment.getExternalStorageState().let {
-        (equals(Environment.MEDIA_MOUNTED)||equals(Environment.MEDIA_MOUNTED_READ_ONLY))
-    }
 
 }
