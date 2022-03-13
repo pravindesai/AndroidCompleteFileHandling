@@ -35,6 +35,8 @@ Example:
 
 
 # External STORAGE --> Permissions required
+external Stoarage have to types private and public
+
 getExternalFilesDir() -> files deleted when app is uninstalled
 getExternalStoragePublicDirectory() -> Files does not get Deleted when app is uninstalled
 

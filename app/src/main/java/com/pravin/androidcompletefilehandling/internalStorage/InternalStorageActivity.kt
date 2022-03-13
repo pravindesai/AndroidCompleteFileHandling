@@ -69,16 +69,10 @@ class InternalStorageActivity : AppCompatActivity(), View.OnClickListener {
             binding.readFileButton   ->{
                 var fis:FileInputStream? = null
                 var data = ""
-                //val stringBuilder = StringBuilder()
                 try {
                     fis = openFileInput(getFileName())
                     val isr = InputStreamReader(fis, "UTF-8")
                     val br = BufferedReader(isr)
-
-//                    while (fis.read()!=-1){
-//                        val char = (fis.read()).toChar()
-//                        stringBuilder.append(char)
-//                    }
                     br.forEachLine {
                         data+=it
                     }

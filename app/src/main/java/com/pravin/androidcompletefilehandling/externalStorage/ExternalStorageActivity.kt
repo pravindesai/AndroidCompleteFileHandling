@@ -1,24 +1,39 @@
 package com.pravin.androidcompletefilehandling.externalStorage
 
+import android.Manifest.permission
+import android.content.ContentValues
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Environment
+import android.provider.MediaStore
 import android.util.Log
 import android.view.View
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContract
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.ViewModelProvider
-import com.pravin.androidcompletefilehandling.R
 import com.pravin.androidcompletefilehandling.databinding.ActivityExternalStorageBinding
-import com.pravin.androidcompletefilehandling.databinding.ActivityInternalStorageBinding
 import com.pravin.androidcompletefilehandling.internalStorage.InternalStorageActViewModel
 import java.io.*
 import java.lang.Exception
 
 class ExternalStorageActivity : AppCompatActivity(), View.OnClickListener {
-
+    val TAG = "**"
+    val STORAGE_PERMISSION_REQUEST = 123
+    var IS_PERMISSION_GRANTED = false
     lateinit var binding: ActivityExternalStorageBinding
     lateinit var viewModel: InternalStorageActViewModel
     lateinit var absolutePath:String
     private val DIR_NAME = "MY_TEST_DIR"
+
+    var PATH_ROOT_EXTERNAL:File? = null
+    var PATH_DOC_EXTERNAL :File? = null
+    var PATH_PIC_EXTERNAL :File? = null
+    var PATH_CUSTOM_DIR_EXTERNAL :File? = null
+    var MY_DIR_NAME = "MyDir"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,107 +42,134 @@ class ExternalStorageActivity : AppCompatActivity(), View.OnClickListener {
 
         supportActionBar?.title = "External Storage Operations"
         viewModel = ViewModelProvider(this).get(InternalStorageActViewModel::class.java)
-        binding.readFileButton  .setOnClickListener(this)
-        binding.writeFileButton .setOnClickListener(this)
-        binding.ShowFilesButton .setOnClickListener(this)
-        binding.deleteFileButton.setOnClickListener(this)
-        binding.createDirButton.setOnClickListener(this)
-        with(filesDir.absolutePath){
-            absolutePath = this
-            binding.pathTv.text = this
-        }
+        binding.readEPubFileButton  .setOnClickListener(this)
+        binding.writeEPubFileButton .setOnClickListener(this)
+        binding.readEPriFileButton .setOnClickListener(this)
+        binding.writeEPriFileButton.setOnClickListener(this)
+
+        PATH_ROOT_EXTERNAL = getExternalFilesDir(null)
+        PATH_DOC_EXTERNAL  = getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)
+        PATH_PIC_EXTERNAL  = getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+        PATH_CUSTOM_DIR_EXTERNAL = getExternalFilesDir(MY_DIR_NAME)
+
+        //Absolute paths
+        binding.pathTv.text = PATH_ROOT_EXTERNAL?.absolutePath
+        Log.e(TAG, "Path absolute "+PATH_ROOT_EXTERNAL )
+        Log.e(TAG, "Path doc "+PATH_DOC_EXTERNAL )
+        Log.e(TAG, "Path pic "+PATH_PIC_EXTERNAL )
+        Log.e(TAG, "Path custome dir "+PATH_CUSTOM_DIR_EXTERNAL?.absolutePath )
+
     }
 
     override fun onClick(v: View?) {
-        when(v){
-            binding.createDirButton  ->{
-                val path: File = getDir(DIR_NAME, MODE_PRIVATE)  //creates if not exists
-                val copyFileName = "copy_"+getFileName()
-                val copy_file: File = File(path, copyFileName)
+            when(v){
+                binding.readEPubFileButton   ->{
+                  val res = storagePermissionCheck()
+                  if(res){
+                          val filePath =  Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
+                          val file = File(filePath, getFileName())
+                          if (file.exists()){
+                              val data = readFromFile(file)
+                              setData(data)
 
-                var fis: FileInputStream? = null
-                var fos: FileOutputStream? = null
-                val data = ""
-                try {
-                    fis = openFileInput(getFileName())
-                    fos = FileOutputStream(copy_file)
-                    val isr = InputStreamReader(fis, "UTF-8")
-                    val br = BufferedReader(isr)
-                    var fileContent:String = ""
-                    br.forEachLine {
-                        fileContent=fileContent+it
-                    }
-                    fos.write(data.toByteArray())
-                    fos.flush()
-                    br.close()
-                    Toast.makeText(this, "Success", Toast.LENGTH_SHORT ).show()
-                }catch (e: Exception){
-                    Log.e("**", "onClick: $e" )
-                    Toast.makeText(this, "Failed", Toast.LENGTH_SHORT ).show()
-                }finally {
-                    fis?.close()
-                    binding.dataEt.setText(data)
-                }
-            }
-            binding.readFileButton   ->{
-                var fis: FileInputStream? = null
-                var data = ""
-                //val stringBuilder = StringBuilder()
-                try {
-                    fis = openFileInput(getFileName())
-                    val isr = InputStreamReader(fis, "UTF-8")
-                    val br = BufferedReader(isr)
+                      }else{
 
-//                    while (fis.read()!=-1){
-//                        val char = (fis.read()).toChar()
-//                        stringBuilder.append(char)
-//                    }
-                    br.forEachLine {
-                        data+=it
-                    }
-                    br.close()
+                      }
+                  }else{
+                      storagePermissionCheck()
+                  }
+                }
+                binding.writeEPubFileButton  ->{
+                    val res = storagePermissionCheck()
+                   if(res){
 
-                }catch (e: Exception){
-                    Log.e("**", "onClick: ${e}" )
-                    Toast.makeText(this, "Failed", Toast.LENGTH_SHORT ).show()
-                }finally {
-                    fis?.close()
-                    binding.dataEt.setText(data)
+                             val filePath =  Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
+                             if (!filePath.exists()) filePath.mkdirs()
+                             val file = File(filePath, getFileName())
+                             writeToFile(file, getData())
+                             Log.e(TAG, "onClick: $filePath" )
+                   }else{
+                       storagePermissionCheck()
+                   }
+                }
+                binding.readEPriFileButton   ->{
+                    val file:File = File(PATH_ROOT_EXTERNAL, getFileName())
+                    val data = readFromFile(file)
+                    setData( data )
+                }
+                binding.writeEPriFileButton  ->{
+                    val file:File = File(PATH_ROOT_EXTERNAL, getFileName())
+                    writeToFile(file, getData())
                 }
             }
-            binding.writeFileButton  ->{
-                var fos: FileOutputStream? = null
-                try {
-                    fos = openFileOutput(getFileName(), MODE_PRIVATE)
-                    fos.write(getData().toByteArray())
-                    fos.flush()
-                    Toast.makeText(this, "File status: Success", Toast.LENGTH_SHORT).show()
-                }catch (e: Exception){
-                    Toast.makeText(this, "Failed", Toast.LENGTH_SHORT).show()
-                }finally {
-                    fos?.close()
-                    binding.dataEt.text.clear()
-                    binding.fileNameEt.text.clear()
-                }
+    }
+
+    private fun readFromFile(file: File): String {
+        var aBuffer: String? = ""
+        try {
+            val fis = FileInputStream(file)
+            val myReader = BufferedReader(InputStreamReader(fis))
+            var aDataRow: String? = ""
+            while (myReader.readLine().also { aDataRow = it } != null) {
+                aBuffer += aDataRow
             }
-            binding.deleteFileButton ->{
-                if(deleteFile(getFileName())){
-                    Toast.makeText(this, "File Deleted", Toast.LENGTH_SHORT).show()
-                }else{
-                    Toast.makeText(this, "Failed", Toast.LENGTH_SHORT).show()
-                }
-                binding.ShowFilesButton.performClick()
-            }
-            binding.ShowFilesButton  ->{
-                val fileList = fileList()
-                binding.fileNameEt.text.clear()
-                binding.dataEt.text.apply {
-                    clear()
-                    append("****File List****\n")
-                    fileList.forEach {
-                        append("--> "+it+"\n")
+            myReader.close()
+            fis.close()
+            Log.e(TAG, "readFromFile: "+file.absolutePath )
+        } catch (e: FileNotFoundException) {
+            e.printStackTrace()
+        }
+        return aBuffer.toString()
+
+    }
+
+    private fun writeToFile(file: File, data: String) {
+        try {
+            val fos  = FileOutputStream(file)
+            fos.write(data.toByteArray())
+            fos.flush()
+            fos.close()
+            Toast.makeText(this, "Success", Toast.LENGTH_SHORT).show()
+        }catch (e:Exception){
+            Toast.makeText(this, "FAILED", Toast.LENGTH_SHORT).show()
+            Log.e(TAG, "writeToFile: $e" )
+        }
+    }
+
+    private fun storagePermissionCheck():Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+           if (
+               (checkSelfPermission(permission.WRITE_EXTERNAL_STORAGE)==PackageManager.PERMISSION_GRANTED)
+               &&
+               (checkSelfPermission(permission.READ_EXTERNAL_STORAGE)==PackageManager.PERMISSION_GRANTED)
+           ){
+               IS_PERMISSION_GRANTED = true
+           }else{
+               requestPermissions(arrayOf(permission.WRITE_EXTERNAL_STORAGE, permission.READ_EXTERNAL_STORAGE), STORAGE_PERMISSION_REQUEST)
+           }
+        }
+            return IS_PERMISSION_GRANTED
+    // && isExternalStorageRedable() && isExternalStorgaeWritable()
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        when(requestCode) {
+            STORAGE_PERMISSION_REQUEST -> {
+                if (grantResults.size > 0) {
+                    val WRITEACCEPTED = grantResults[0] == PackageManager.PERMISSION_GRANTED
+                    if (WRITEACCEPTED) {
+                        IS_PERMISSION_GRANTED = true
+                    } else {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            requestPermissions(
+                                arrayOf(permission.WRITE_EXTERNAL_STORAGE, permission.READ_EXTERNAL_STORAGE), STORAGE_PERMISSION_REQUEST
+                            )
+                        }
                     }
-                    append("****END****\n")
                 }
             }
         }
@@ -137,5 +179,10 @@ class ExternalStorageActivity : AppCompatActivity(), View.OnClickListener {
     fun setFileName(fileName:String) = binding.fileNameEt.setText(fileName)
     fun getData() = binding.dataEt.text.toString()
     fun setData(data:String) = binding.dataEt.setText(data)
+
+    fun isExternalStorageRedable():Boolean = Environment.getExternalStorageState().equals( Environment.MEDIA_MOUNTED )
+    fun isExternalStorgaeWritable():Boolean = Environment.getExternalStorageState().let {
+        (equals(Environment.MEDIA_MOUNTED)||equals(Environment.MEDIA_MOUNTED_READ_ONLY))
+    }
 
 }
