@@ -40,9 +40,10 @@ object FileHandler {
         }
     }
 
+
+
     fun isExternalStorageRedable():Boolean = Environment.getExternalStorageState().equals( Environment.MEDIA_MOUNTED )
     fun isExternalStorgaeWritable():Boolean = Environment.getExternalStorageState().let {
         (equals(Environment.MEDIA_MOUNTED)||equals(Environment.MEDIA_MOUNTED_READ_ONLY))
     }
-
 }
